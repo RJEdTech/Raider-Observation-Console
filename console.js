@@ -20,10 +20,11 @@ if (document.getElementById(ID)) { teardown(); return; }
 
 /* ---------- guard ---------- */
 var cards = qa('.category-lookfor');
-if (!cards.length) {
+var onForm = !!cards.length;
+if (!onForm && !/ieobservation\.com/i.test(location.hostname)) {
 var n = document.createElement('div');
 n.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:2147483000;background:#8c2f2f;color:#fff;padding:12px 16px;font:14px -apple-system,Segoe UI,Roboto,sans-serif';
-n.textContent = 'Observation Console: this is not a Conduct an Observation screen. Open Home › Conduct an observation (or Continue a draft), let the form finish loading, then click the bookmark again.';
+n.textContent = 'Observation Console: open this on iObservation — a Conduct an Observation screen for the element tools, or any iObservation page for What I have done.';
 document.body.appendChild(n); setTimeout(function () { n.remove(); }, 6000); return;
 }
 
@@ -148,13 +149,90 @@ btn.textContent = 'Hide rubric';
 }
 function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
 
+/* ---------- what I have done — from the observer's own history ----------
+   /iob/api/observations/search is scoped to the signed-in observer: it returns
+   only observations they conducted. An observation counts as finished once it
+   carries a dateCompleted; the rest are still open drafts. */
+var WORK = null;
+function fetchWork(done) {
+if (WORK) { done(WORK); return; }
+fetch('/iob/api/observations/search?page=0&size=500', { headers: { Accept: 'application/json' }, credentials: 'same-origin' })
+.then(function (r) { return r.ok ? r.text() : null; })
+.then(function (txt) {
+if (!txt) { done(null); return; }
+var j; try { j = JSON.parse(txt.replace(/^while\(1\);/, '')); } catch (e) { done(null); return; }
+WORK = (j.content || []).map(function (o) {
+var l = o.learner || {};
+return {
+name: [l.lastName, l.firstName].filter(Boolean).join(', ') || 'Unknown',
+started: (o.dateStarted || '').slice(0, 10),
+done: (o.dateCompleted || '').slice(0, 10),
+id: o.id
+};
+});
+done(WORK);
+})
+.catch(function () { done(null); });
+}
+function yearStart() { var n = new Date(), y = n.getFullYear(); return (n.getMonth() >= 7 ? y : y - 1) + '-08-01'; }
+function ageDays(iso) { return Math.max(0, Math.round((Date.now() - Date.parse(iso + 'T00:00:00')) / 864e5)); }
+function renderWork(rows) {
+var body = q('.rjoc-workbody', wrap);
+if (!rows) {
+body.innerHTML = '<p class="rjoc-wnote">Could not read your history. Open <strong>Observations &rsaquo; Conduct Observation &rsaquo; Completed Observations</strong> instead.</p>';
+return;
+}
+var ys = yearStart();
+var drafts = rows.filter(function (r) { return !r.done; });
+var fin = rows.filter(function (r) { return r.done; });
+var thisYear = fin.filter(function (r) { return r.done >= ys; });
+var byT = {};
+fin.forEach(function (r) {
+if (!byT[r.name]) byT[r.name] = { n: 0, last: '', year: 0 };
+var x = byT[r.name]; x.n++; if (r.done > x.last) x.last = r.done; if (r.done >= ys) x.year++;
+});
+var names = Object.keys(byT).sort(function (a, b) { return byT[b].last.localeCompare(byT[a].last); });
+var months = {};
+thisYear.forEach(function (r) { months[r.done.slice(0, 7)] = (months[r.done.slice(0, 7)] || 0) + 1; });
+var mk = Object.keys(months).sort();
+var peak = Math.max.apply(null, mk.map(function (k) { return months[k]; }).concat([1]));
+var html = '<div class="rjoc-wstat"><b>' + thisYear.length + '</b> finished since 1 August &middot; <b>' +
+names.filter(function (n) { return byT[n].year; }).length + '</b> teachers this year &middot; <b>' + fin.length + '</b> all time</div>';
+if (drafts.length) {
+html += '<div class="rjoc-wsec">Still open</div>';
+drafts.sort(function (a, b) { return a.started.localeCompare(b.started); }).forEach(function (r) {
+var a = ageDays(r.started);
+html += '<div class="rjoc-wrow"><span class="rjoc-wname">' + esc(r.name) + '</span>' +
+'<span class="rjoc-wage' + (a > 7 ? ' rjoc-wold' : '') + '">' + a + ' day' + (a === 1 ? '' : 's') + '</span>' +
+'<a class="rjoc-wgo" href="/app/observations/' + esc(r.id) + '/conduct">continue</a></div>';
+});
+}
+if (mk.length) {
+html += '<div class="rjoc-wsec">By month, this year</div><div class="rjoc-wbars">';
+mk.forEach(function (k) {
+html += '<div class="rjoc-wbar"><i style="height:' + Math.round(months[k] / peak * 46 + 4) + 'px"></i><u>' + k.slice(5) + '</u><b>' + months[k] + '</b></div>';
+});
+html += '</div>';
+}
+html += '<div class="rjoc-wsec">Teachers you have seen &mdash; most recent first</div>';
+names.forEach(function (n) {
+var x = byT[n];
+html += '<div class="rjoc-wrow"><span class="rjoc-wname">' + esc(n) + '</span>' +
+'<span class="rjoc-wmeta">' + x.last + (x.n > 1 ? ' &middot; ' + x.n + ' visits' : '') + (x.year ? '' : ' &middot; not this year') + '</span>' +
+'<button type="button" class="rjoc-wgo" data-find="' + esc(n) + '">find</button></div>';
+});
+html += '<p class="rjoc-wnote">Only observations <strong>you</strong> conducted. <em>find</em> copies the name and opens Completed Observations &mdash; paste it into <em>Search user or ID</em>.</p>';
+body.innerHTML = html;
+}
+
 /* ---------- UI ---------- */
 var wrap = document.createElement('div'); wrap.id = ID;
 wrap.innerHTML =
 '<div class="rjoc-bar">' +
 '<span class="rjoc-brand">Observation Console</span>' +
-'<button type="button" class="rjoc-b" data-a="panel">Elements</button>' +
-'<button type="button" class="rjoc-b" data-a="next">Next unscored</button>' +
+(onForm ? '<button type="button" class="rjoc-b" data-a="panel">Elements</button>' +
+'<button type="button" class="rjoc-b" data-a="next">Next unscored</button>' : '') +
+'<button type="button" class="rjoc-b" data-a="work">What I have done</button>' +
 '<span class="rjoc-chip" data-a="type"></span><span class="rjoc-chip" data-a="eval"></span>' +
 '<span class="rjoc-prog"></span><span class="rjoc-sp"></span>' +
 '<button type="button" class="rjoc-b rjoc-g" data-a="save">Save</button>' +
@@ -171,7 +249,8 @@ wrap.innerHTML =
 '<label class="rjoc-int"><input type="checkbox" class="rjoc-intbox"> show student interview blocks</label>' +
 '<div class="rjoc-list"></div>' +
 '<p class="rjoc-foot">This also filters iObservation\'s own element list on the left. Your selection is remembered on this computer. Nothing here is saved to the observation until you press Save.</p>' +
-'</div>';
+'</div>' +
+'<div class="rjoc-panel rjoc-work" hidden><div class="rjoc-workbody"><p class="rjoc-wnote">Reading your history&hellip;</p></div></div>';
 
 var css = document.createElement('style'); css.id = ID + 'Css';
 css.textContent = [
@@ -204,6 +283,23 @@ css.textContent = [
 '#' + ID + ' .rjoc-row span[data-j]{flex:1;font-size:13px;cursor:pointer}',
 '#' + ID + ' .rjoc-star{color:#8a7430;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em}',
 '#' + ID + ' .rjoc-foot{font-size:11.5px;color:#8a8a82;margin:10px 0 6px}',
+'#' + ID + ' .rjoc-work{width:470px}',
+'#' + ID + ' .rjoc-wstat{font-size:13.5px;color:#1a1a1a;background:#f0f5f2;border-left:3px solid #0f2a1f;border-radius:6px;padding:9px 12px}',
+'#' + ID + ' .rjoc-wstat b{font-size:15px;color:#0f2a1f}',
+'#' + ID + ' .rjoc-wsec{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#7a7a72;margin:14px 0 4px;padding-bottom:4px;border-bottom:1px solid #eceae4}',
+'#' + ID + ' .rjoc-wrow{display:flex;align-items:center;gap:8px;padding:4px 6px;border-radius:6px;font-size:13px}',
+'#' + ID + ' .rjoc-wrow:hover{background:#f4f4f2}',
+'#' + ID + ' .rjoc-wname{flex:1;font-weight:600;color:#14241d}',
+'#' + ID + ' .rjoc-wmeta,#' + ID + ' .rjoc-wage{font-size:12px;color:#7a7a72;white-space:nowrap}',
+'#' + ID + ' .rjoc-wold{color:#8c2f2f;font-weight:700}',
+'#' + ID + ' .rjoc-wgo{font:inherit;font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:6px;border:1px solid #cfcfc8;background:#fff;color:#1a1a1a;cursor:pointer;text-decoration:none}',
+'#' + ID + ' .rjoc-wgo:hover{background:#f2c14e;border-color:#f2c14e}',
+'#' + ID + ' .rjoc-wbars{display:flex;align-items:flex-end;gap:7px;padding:6px 2px 0}',
+'#' + ID + ' .rjoc-wbar{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10.5px;color:#7a7a72}',
+'#' + ID + ' .rjoc-wbar i{display:block;width:20px;background:#0f2a1f;border-radius:3px 3px 0 0}',
+'#' + ID + ' .rjoc-wbar b{font-size:11px;color:#0f2a1f}',
+'#' + ID + ' .rjoc-wbar u{text-decoration:none}',
+'#' + ID + ' .rjoc-wnote{font-size:11.5px;color:#8a8a82;margin:10px 0 6px;line-height:1.5}',
 '.rjoc-rub{margin:10px 0 0;background:#fbf7ea;border-left:3px solid #f2c14e;border-radius:6px;padding:10px 14px}',
 '.rjoc-rubhead{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:#8a7430;font-weight:700;margin-bottom:6px}',
 '.rjoc-rl{display:flex;gap:10px;font-size:13px;line-height:1.45;margin:5px 0;opacity:.6}',
@@ -215,10 +311,15 @@ css.textContent = [
 '.rjoc-dupe{display:inline-block;margin-left:8px;font-size:11px;font-weight:700;color:#8c2f2f}'
 ].join('');
 document.head.appendChild(css); document.body.appendChild(wrap);
-var panel = q('.rjoc-panel', wrap), list = q('.rjoc-list', wrap);
+var panel = q('.rjoc-panel', wrap), list = q('.rjoc-list', wrap), work = q('.rjoc-work', wrap);
 
 function scoredCount(e) { return qa('.lookfor-scale-option .p-checkbox-checked', e.card).length; }
+function paintStatus0() {
+q('.rjoc-prog', wrap).textContent = '';
+['type', 'eval'].forEach(function (k) { var c = q('[data-a="' + k + '"]', wrap); if (c) c.remove(); });
+}
 function paintStatus() {
+if (!onForm) return;
 var ts = t(typeSel()), es = t(evalSel());
 var tc = q('[data-a="type"]', wrap), ec = q('[data-a="eval"]', wrap);
 var unset = /Select Type/i.test(ts) || !ts;
@@ -268,6 +369,8 @@ e.card.scrollIntoView({ block: 'start', behavior: 'smooth' });
 }
 
 wrap.addEventListener('click', function (ev) {
+var find = ev.target.getAttribute && ev.target.getAttribute('data-find');
+if (find) { try { navigator.clipboard.writeText(find); } catch (e) {} location.href = '/app/observations#completed'; return; }
 var j = ev.target.getAttribute && ev.target.getAttribute('data-j');
 if (j) { goTo(j); panel.hidden = true; return; }
 if (ev.target.type === 'checkbox' && ev.target.hasAttribute('data-n')) {
@@ -278,7 +381,8 @@ save(); apply(); return;
 }
 var el = ev.target.closest('[data-a]'); if (!el) return;
 var a = el.getAttribute('data-a');
-if (a === 'panel') { panel.hidden = !panel.hidden; if (!panel.hidden) { paintList(); q('.rjoc-search', wrap).focus(); } }
+if (a === 'panel') { work.hidden = true; panel.hidden = !panel.hidden; if (!panel.hidden) { paintList(); q('.rjoc-search', wrap).focus(); } }
+else if (a === 'work') { panel.hidden = true; work.hidden = !work.hidden; if (!work.hidden) fetchWork(renderWork); }
 else if (a === 'close') teardown();
 else if (a === 'type') setSelect(typeSel(), 'Formal');
 else if (a === 'eval') setSelect(evalSel(), 'No');
@@ -301,10 +405,10 @@ q('.rjoc-search', wrap).addEventListener('input', paintList);
 q('.rjoc-intbox', wrap).addEventListener('change', function () { showInt = this.checked; apply(); });
 document.addEventListener('change', function (ev) { if (!wrap.contains(ev.target)) setTimeout(paintStatus, 60); }, true);
 document.addEventListener('keydown', function (ev) {
-if (ev.key === 'Escape' && !panel.hidden) { panel.hidden = true; }
+if (ev.key === 'Escape') { panel.hidden = true; work.hidden = true; }
 });
 document.addEventListener('click', function (ev) {
-if (!panel.hidden && !wrap.contains(ev.target)) panel.hidden = true;
+if (!wrap.contains(ev.target)) { panel.hidden = true; work.hidden = true; }
 }, true);
-addCardTools(); apply();
+if (onForm) { addCardTools(); apply(); } else { document.body.classList.add('rjoc-on'); paintStatus0(); }
 })();
