@@ -235,8 +235,8 @@ wrap.innerHTML =
 '<button type="button" class="rjoc-b" data-a="work">What I have done</button>' +
 '<span class="rjoc-chip" data-a="type"></span><span class="rjoc-chip" data-a="eval"></span>' +
 '<span class="rjoc-prog"></span><span class="rjoc-sp"></span>' +
-'<button type="button" class="rjoc-b rjoc-g" data-a="save">Save</button>' +
-'<button type="button" class="rjoc-b rjoc-g" data-a="review">Review</button>' +
+(onForm ? '<button type="button" class="rjoc-b rjoc-g" data-a="save">Save</button>' +
+'<button type="button" class="rjoc-b rjoc-g" data-a="review">Review</button>' : '') +
 '<button type="button" class="rjoc-b rjoc-g" data-a="close">Close</button>' +
 '</div>' +
 '<div class="rjoc-panel" hidden>' +
