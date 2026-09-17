@@ -10,7 +10,7 @@ function teardown() {
 var w = document.getElementById(ID); if (w) w.remove();
 var c = document.getElementById(ID + 'Css'); if (c) c.remove();
 document.body.classList.remove('rjoc-on');
-qa('.category-lookfor').forEach(function (x) { x.classList.remove('rjoc-hide'); });
+qa('.rjoc-hide').forEach(function (x) { x.classList.remove('rjoc-hide'); });
 qa('.rjoc-jump').forEach(function (x) { x.remove(); });
 qa('.rjoc-rub').forEach(function (x) { x.remove(); });
 }
@@ -39,6 +39,23 @@ els.push({ card: c, num: m ? +m[1] : null, title: m ? m[2] : name, raw: name, in
 });
 var numbered = els.filter(function (e) { return e.num; });
 
+/* iObservation's own left-hand navigator — same elements, its own list */
+var tl = qa('nav.observation-timeline li.timeline-lookfor').map(function (li) {
+var title = t(q('.timeline-item-title', li)) || t(li);
+var m = title.match(/^(\d+)\./);
+return { li: li, num: m ? +m[1] : null, interview: !m };
+});
+function applyTimeline() {
+tl.forEach(function (x) {
+var on = x.interview ? showInt : sel.indexOf(x.num) > -1;
+x.li.classList.toggle('rjoc-hide', !on);
+});
+qa('nav.observation-timeline li.timeline-subcategory, nav.observation-timeline li.timeline-category').forEach(function (li) {
+var live = qa('li.timeline-lookfor', li).filter(function (n) { return !n.classList.contains('rjoc-hide'); });
+li.classList.toggle('rjoc-hide', !live.length);
+});
+}
+
 /* ---------- state ---------- */
 var sel = null; try { sel = JSON.parse(localStorage.getItem(KEY)); } catch (e) {}
 if (!sel || !sel.length) sel = PRESETS.chair.slice();
@@ -51,7 +68,7 @@ var on = e.interview ? showInt : sel.indexOf(e.num) > -1;
 e.card.classList.toggle('rjoc-hide', !on);
 });
 document.body.classList.add('rjoc-on');
-paintList(); paintStatus();
+applyTimeline(); paintList(); paintStatus();
 }
 
 /* ---------- form-level selects ---------- */
@@ -86,7 +103,7 @@ if (open) { open.remove(); btn.textContent = 'Show rubric'; return; }
 var vs = qa('button', e.card).filter(function (b) { return /View Scale/i.test(t(b)); })[0];
 if (!vs) { btn.textContent = 'no scale'; return; }
 btn.textContent = 'loading…'; vs.click();
-waitFor(function () { var d = q('.iob-scale-resource-drawer'); return d && q('table', d) ? d : null; }, 8000, function (d) {
+waitFor(function () { var d = q('.iob-scale-resource-drawer'); return d && q('table', d) ? d : null; }, 12000, function (d) {
 if (!d) { btn.textContent = 'Show rubric'; return; }
 var tb = q('table', d);
 var heads = qa('th', tb).map(t), cells = qa('td', tb).map(t), levels = [];
@@ -129,13 +146,14 @@ wrap.innerHTML =
 '<button type="button" class="rjoc-b rjoc-s" data-a="p-none">None</button></div>' +
 '<label class="rjoc-int"><input type="checkbox" class="rjoc-intbox"> show student interview blocks</label>' +
 '<div class="rjoc-list"></div>' +
-'<p class="rjoc-foot">Your selection is remembered on this computer. Nothing here is saved to the observation until you press Save.</p>' +
+'<p class="rjoc-foot">This also filters iObservation\'s own element list on the left. Your selection is remembered on this computer. Nothing here is saved to the observation until you press Save.</p>' +
 '</div>';
 
 var css = document.createElement('style'); css.id = ID + 'Css';
 css.textContent = [
 'body.rjoc-on{padding-top:56px}',
 'body.rjoc-on .category-lookfor.rjoc-hide{display:none!important}',
+'body.rjoc-on nav.observation-timeline li.rjoc-hide{display:none!important}',
 'body.rjoc-on .ql-editor{min-height:170px}',
 'body.rjoc-on .category-lookfor{scroll-margin-top:64px}',
 '#' + ID + '{position:fixed;top:0;left:0;right:0;z-index:2147483000;font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}',
@@ -151,7 +169,7 @@ css.textContent = [
 '#' + ID + ' .rjoc-chip:hover{filter:brightness(1.15)}',
 '#' + ID + ' .rjoc-chip.rjoc-warn{background:#8c2f2f;color:#fff}',
 '#' + ID + ' .rjoc-prog{font-size:12px;color:#cfe3d8}',
-'#' + ID + ' .rjoc-panel{position:absolute;top:56px;left:14px;width:440px;max-width:calc(100vw - 28px);max-height:72vh;overflow:auto;background:#fff;color:#1a1a1a;border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,.28);padding:12px 14px 6px}',
+'#' + ID + ' .rjoc-panel{position:absolute;top:56px;left:14px;width:400px;max-width:calc(100vw - 28px);max-height:56vh;overflow:auto;background:#fff;color:#1a1a1a;border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,.28);padding:12px 14px 6px}',
 '#' + ID + ' .rjoc-prow{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}',
 '#' + ID + ' .rjoc-search{flex:1 1 150px;font:inherit;font-size:13px;padding:6px 9px;border:1px solid #d8d8d2;border-radius:7px;color:#1a1a1a;background:#fff}',
 '#' + ID + ' .rjoc-int{display:block;font-size:12px;color:#5a5a55;margin:2px 0 8px}',
@@ -227,7 +245,7 @@ e.card.scrollIntoView({ block: 'start', behavior: 'smooth' });
 
 wrap.addEventListener('click', function (ev) {
 var j = ev.target.getAttribute && ev.target.getAttribute('data-j');
-if (j) { goTo(j); return; }
+if (j) { goTo(j); panel.hidden = true; return; }
 if (ev.target.type === 'checkbox' && ev.target.hasAttribute('data-n')) {
 var v = +ev.target.getAttribute('data-n'), i = sel.indexOf(v);
 if (ev.target.checked && i < 0) sel.push(v);
@@ -250,10 +268,10 @@ var nxt = numbered.filter(function (e) { return sel.indexOf(e.num) > -1 && !scor
 if (nxt) nxt.card.scrollIntoView({ block: 'start', behavior: 'smooth' });
 else q('.rjoc-prog', wrap).textContent = 'all selected elements scored';
 }
-else if (a === 'p-chair') { sel = PRESETS.chair.slice(); save(); apply(); }
-else if (a === 'p-walk') { sel = PRESETS.walk.slice(); save(); apply(); }
-else if (a === 'p-all') { sel = numbered.map(function (e) { return e.num; }); save(); apply(); }
-else if (a === 'p-none') { sel = []; save(); apply(); }
+else if (a === 'p-chair') { sel = PRESETS.chair.slice(); save(); apply(); panel.hidden = true; }
+else if (a === 'p-walk') { sel = PRESETS.walk.slice(); save(); apply(); panel.hidden = true; }
+else if (a === 'p-all') { sel = numbered.map(function (e) { return e.num; panel.hidden = true; }); save(); apply(); }
+else if (a === 'p-none') { sel = []; save(); apply(); panel.hidden = true; }
 });
 q('.rjoc-search', wrap).addEventListener('input', paintList);
 q('.rjoc-intbox', wrap).addEventListener('change', function () { showInt = this.checked; apply(); });
@@ -261,5 +279,8 @@ document.addEventListener('change', function (ev) { if (!wrap.contains(ev.target
 document.addEventListener('keydown', function (ev) {
 if (ev.key === 'Escape' && !panel.hidden) { panel.hidden = true; }
 });
+document.addEventListener('click', function (ev) {
+if (!panel.hidden && !wrap.contains(ev.target)) panel.hidden = true;
+}, true);
 addCardTools(); apply();
 })();
