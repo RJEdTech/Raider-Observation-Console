@@ -18,6 +18,7 @@ One click on the screen you already have open:
 
 - **Only the elements you chose** — the other 38 hidden, the interview blocks hidden unless you want them. Searchable list of all 41, the chair eight marked, click a title to jump straight to it. Your selection is remembered, so the next visit opens the way you left it.
 - **Presets** — Chair 8 · Walkthrough 9 · All 41 · None
+- **iObservation's own element list on the left is filtered to match**, so the navigator and the form agree
 - **Type and the evaluation flag on screen** — Type unset goes red; one click sets **Formal**, one more sets the evaluation flag to **No**
 - **Show rubric** — the element's real scale text pinned under the checkboxes, Applying and Developing in full and the other three greyed
 - **Comment** — jumps to that element's comment box, cursor in it, box taller than the vendor's
@@ -59,10 +60,10 @@ The form lives behind your login on the vendor's site. A separate web page can't
 |---|---|
 | `index.html` | The setup page. Holds the bookmarklet, URL-encoded, in the drag link. |
 | `console.js` | The same code, readable. Edit here, then re-encode into `index.html`. |
+| `img/` | The two screenshots used in the walkthrough. The teacher's name is blurred — the repo is public, so keep it that way. |
 
 ## Notes
 
 - **Built against:** the Angular/PrimeNG conduct screen at `ieobservation.com/app/observations/<id>/conduct`, Standard 3, September 2026.
-- **Tested on:** a Standard 3 draft — 41 elements and 9 interview blocks indexed, chair eight shown.
-- **Not yet confirmed on screen:** the *Show rubric* round trip through the View Scale drawer.
+- **Tested on:** a Standard 3 draft — 41 elements and 9 interview blocks indexed, chair eight shown on both the form and the navigator, Type set from the bar, *Show rubric* opened and closed cleanly, and Close restored the form with nothing ticked and nothing saved.
 - The vendor can change the page under this at any time. If the bar appears but nothing collapses, tell Educational Technology.
