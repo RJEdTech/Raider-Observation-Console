@@ -7,12 +7,14 @@ var t = function (e) { return e ? (e.innerText || e.textContent || '').replace(/
 
 /* ---------- toggle off ---------- */
 function teardown() {
+if (typeof sweepOverlays !== 'function') { /* defined below via hoisting */ }
 var w = document.getElementById(ID); if (w) w.remove();
 var c = document.getElementById(ID + 'Css'); if (c) c.remove();
 document.body.classList.remove('rjoc-on');
 qa('.rjoc-hide').forEach(function (x) { x.classList.remove('rjoc-hide'); });
 qa('.rjoc-jump').forEach(function (x) { x.remove(); });
 qa('.rjoc-rub').forEach(function (x) { x.remove(); });
+sweepOverlays();
 }
 if (document.getElementById(ID)) { teardown(); return; }
 
@@ -96,6 +98,27 @@ else if (Date.now() - t0 > ms) { clearInterval(iv); done(null); }
 }, 150);
 }
 
+/* ---------- the vendor's drawer sometimes leaves its mask behind ----------
+   A p-overlay-mask stuck in leave-active covers the whole page with
+   pointer-events:auto, so every click afterwards lands on nothing. Only ever
+   removes overlays with no open drawer behind them. */
+function sweepOverlays() {
+if (q('.p-drawer-open')) return false;
+var gone = 0;
+qa('.p-overlay-mask, .p-drawer-mask').forEach(function (m) { m.remove(); gone++; });
+qa('.p-drawer').forEach(function (d) { if (!d.classList.contains('p-drawer-open')) { d.remove(); gone++; } });
+if (gone) { document.body.style.overflow = ''; document.documentElement.style.overflow = ''; }
+return !!gone;
+}
+function closeDrawer(done) {
+var cb = qa('.p-drawer button').filter(function (b) { return /close/i.test(b.getAttribute('aria-label') || ''); })[0] || qa('.p-drawer button')[0];
+if (cb) cb.click();
+document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+waitFor(function () { return q('.p-drawer-open') ? null : true; }, 3000, function () {
+setTimeout(function () { sweepOverlays(); if (done) done(); }, 450);
+});
+}
+
 /* ---------- rubric, read out of the View Scale drawer ---------- */
 function rubric(e, btn) {
 var open = q('.rjoc-rub', e.card);
@@ -108,8 +131,9 @@ if (!d) { btn.textContent = 'Show rubric'; return; }
 var tb = q('table', d);
 var heads = qa('th', tb).map(t), cells = qa('td', tb).map(t), levels = [];
 heads.forEach(function (h, i) { levels.push([h, cells[i] || '']); });
-var cb = qa('.p-drawer button').filter(function (b) { return /close/i.test(b.getAttribute('aria-label') || ''); })[0] || qa('.p-drawer button')[0];
-if (cb) cb.click();
+/* let the open animation finish before asking it to close — interrupting it
+   is what wedges the mask */
+setTimeout(function () { closeDrawer(); }, 550);
 var box = document.createElement('div'); box.className = 'rjoc-rub';
 box.innerHTML = '<div class="rjoc-rubhead">What the rubric actually says</div>' +
 levels.map(function (l) {
