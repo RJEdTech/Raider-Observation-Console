@@ -32,13 +32,9 @@
   .masthead .in{max-width:880px;margin:0 auto;padding:0 20px;display:flex;
     align-items:center;justify-content:space-between;gap:14px}
   .masthead .lock{display:flex;align-items:center;gap:13px;min-width:0}
-  .shield{width:40px;height:40px;flex:0 0 auto;border-radius:6px;background:var(--red);
-    display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;
-    font-size:15px;letter-spacing:.02em}
+  .rj-mark{height:40px;width:auto;display:block;flex-shrink:0}
   .masthead .name{color:#fff;font-size:20px;font-weight:700;line-height:1.15}
   .masthead .sub{color:#b8b8b8;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;margin-top:3px}
-  .themebtn{background:transparent;border:1px solid rgba(255,255,255,.4);color:#fff;
-    font:inherit;font-size:13px;padding:7px 12px;border-radius:7px;cursor:pointer;flex:0 0 auto}
   .rule{height:6px;background:var(--red)}
   .wrap{max-width:880px;margin:0 auto;padding:0 20px 70px}
   h1{font-size:29px;line-height:1.2;margin:34px 0 10px;text-wrap:balance}
@@ -96,18 +92,31 @@
   .shotnote{font-size:13px;color:var(--mute);margin:-14px 0 24px}
   .callout{border-left:3px solid var(--red);padding:2px 0 2px 14px;margin:18px 0;font-size:16px}
 </style>
+<meta name="theme-color" content="#C11430">
+
+<!-- Light/dark follows the operating system setting. Runs before <body>
+     renders, so there is no flash of the wrong theme. No in-page toggle by design. -->
+<script>
+(function(){
+  var mq = window.matchMedia("(prefers-color-scheme: dark)");
+  function apply(){ document.documentElement.setAttribute("data-theme", mq.matches ? "dark" : "light"); }
+  apply();
+  if (mq.addEventListener) mq.addEventListener("change", apply);
+  else if (mq.addListener) mq.addListener(apply);
+})();
+</script>
+
 </head>
 <body>
 
 <div class="masthead"><div class="in">
   <div class="lock">
-    <div class="shield" aria-hidden="true">RJ</div>
+    <img class="rj-mark" src="data:image/png;base64,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" alt="Regis Jesuit">
     <div>
       <div class="name">Raider Observation Console</div>
       <div class="sub">Regis Jesuit &middot; Educational Technology &middot; for chairs and administrators</div>
     </div>
   </div>
-  <button class="themebtn" id="theme" type="button">Dark</button>
 </div></div>
 <div class="rule"></div>
 
@@ -382,27 +391,19 @@ not collapse, or <em>Show rubric</em> sits on <em>loading</em>, tell Educational
 it gets fixed. If nothing at all happens, you are probably not on a Conduct an Observation
 screen yet, or it hasn't finished loading &mdash; wait a moment and click again.</p>
 
-<p class="foot">Regis Jesuit High School &middot; Educational Technology &middot; built for department
-chairs and administrators filing observations.</p>
+<footer>
+  Regis Jesuit High School &middot; Educational Technology &middot; built for department
+chairs and administrators filing observations.
+  <br><br>
+  No data leaves your browser &middot;
+  <a href="https://github.com/RJEdTech/Raider-Observation-Console" target="_blank" rel="noopener">View on GitHub</a> &middot;
+  <a href="https://forms.microsoft.com/r/sKU9sHY45r" target="_blank" rel="noopener">Report a bug or request a tool</a>
+</footer>
 
 </div>
 
 <script>
 (function(){
-  /* theme toggle — remembers the choice, like the Randomizer */
-  var btn=document.getElementById('theme'), root=document.documentElement;
-  function sysDark(){ return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches; }
-  function current(){ return root.getAttribute('data-theme') || (sysDark()?'dark':'light'); }
-  function paint(){ btn.textContent = current()==='dark' ? 'Light' : 'Dark'; }
-  try{ var saved=localStorage.getItem('rjoc-theme'); if(saved) root.setAttribute('data-theme',saved); }catch(e){}
-  paint();
-  btn.addEventListener('click',function(){
-    var next = current()==='dark' ? 'light' : 'dark';
-    root.setAttribute('data-theme',next);
-    try{ localStorage.setItem('rjoc-theme',next); }catch(e){}
-    paint();
-  });
-
   /* the copy-paste fallback reads the bookmarklet straight off the drag link,
      so the code exists exactly once in this file */
   var link=document.getElementById('bm'), code=document.getElementById('code');
@@ -425,4 +426,41 @@ chairs and administrators filing observations.</p>
   });
 })();
 </script>
+<!--RJTOOLS-->
+<section class="rj-tools" aria-label="More RJ Ed Tech tools">
+<style>
+.rj-tools{max-width:1000px;margin:52px auto 0;padding:30px 20px 44px;border-top:1px solid rgba(128,128,128,.28);font-family:"Segoe UI",-apple-system,BlinkMacSystemFont,system-ui,sans-serif;box-sizing:border-box;}
+.rj-tools *{box-sizing:border-box;}
+.rj-tools h2{font-size:.72rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#C11430;margin:0 0 16px;}
+.rj-tools-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(232px,1fr));gap:10px;}
+.rj-tool{display:block;padding:13px 15px;border:1px solid rgba(128,128,128,.28);border-radius:8px;text-decoration:none;color:inherit;background:rgba(128,128,128,.05);transition:border-color .15s,transform .15s;}
+.rj-tool:hover{border-color:#C11430;transform:translateY(-1px);}
+.rj-tool .rj-t{font-weight:650;font-size:.95rem;display:flex;align-items:center;gap:6px;color:inherit;line-height:1.25;}
+.rj-tool .rj-arrow{color:#C11430;transition:transform .15s;font-weight:700;}
+.rj-tool:hover .rj-arrow{transform:translateX(3px);}
+.rj-tool .rj-d{font-size:.8rem;line-height:1.42;margin-top:5px;opacity:.72;}
+.rj-tool.is-here{border-color:#C11430;background:rgba(193,20,48,.10);cursor:default;}
+.rj-tool.is-here:hover{transform:none;}
+.rj-here{margin-left:auto;font-size:.6rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#C11430;border:1px solid #C11430;border-radius:99px;padding:2px 8px;white-space:nowrap;}
+.rj-tools-foot{margin-top:18px;font-size:.72rem;opacity:.55;}
+</style>
+  <h2>More RJ Ed Tech tools</h2>
+  <div class="rj-tools-grid">
+    <a class="rj-tool" href="https://rjedtech.github.io/Raider-Quiz-Builder/"><div class="rj-t">Raider Quiz Builder <span class="rj-arrow">&rarr;</span></div><div class="rj-d">Build, expand, and convert Canvas quizzes from plain text.</div></a>
+    <a class="rj-tool" href="https://rjedtech.github.io/Raider-Randomizer/"><div class="rj-t">Raider Randomizer <span class="rj-arrow">&rarr;</span></div><div class="rj-d">Fair student picking, grouping, and seating shuffles.</div></a>
+    <a class="rj-tool" href="https://rjedtech.github.io/Raider-Timer/"><div class="rj-t">Raider Timer <span class="rj-arrow">&rarr;</span></div><div class="rj-d">Countdown, stopwatch, and station rotation for class.</div></a>
+    <a class="rj-tool" href="https://rjedtech.github.io/Raider-Pods/"><div class="rj-t">Raider Pod Generator <span class="rj-arrow">&rarr;</span></div><div class="rj-d">Mixed teams of four, seated so partners can actually help each other.</div></a>
+    <a class="rj-tool" href="https://rjedtech.github.io/Raider-Roster-Hub/"><div class="rj-t">Raider Roster Hub <span class="rj-arrow">&rarr;</span></div><div class="rj-d">One class list for all your RJ tools, and ZipGrade without student names.</div></a>
+    <a class="rj-tool" href="https://rjedtech.github.io/MyRJScheduleCleaner/"><div class="rj-t">MyRJ Schedule Cleaner <span class="rj-arrow">&rarr;</span></div><div class="rj-d">Import your MyRJ schedule into Outlook without looking busy all day.</div></a>
+    <a class="rj-tool" href="https://rjedtech.github.io/cooperative-learning-toolkit/"><div class="rj-t">Cooperative Learning Toolkit <span class="rj-arrow">&rarr;</span></div><div class="rj-d">Every Kagan structure, method, and source in one place.</div></a>
+    <a class="rj-tool" href="https://rjedtech.github.io/Raider-Observation-Digest/"><div class="rj-t">Raider Observation Digest <span class="rj-arrow">&rarr;</span></div><div class="rj-d">Your observation report, cut down to what was actually scored and written.</div></a>
+    <div class="rj-tool is-here"><div class="rj-t">Raider Observation Console<span class="rj-here">You&rsquo;re here</span></div><div class="rj-d">For chairs: the observation form showing only the elements you came to watch.</div></div>
+    <a class="rj-tool" href="https://rjedtech.github.io/EdTech-Status/"><div class="rj-t">EdTech Status <span class="rj-arrow">&rarr;</span></div><div class="rj-d">Live status of Regis Jesuit's ed-tech systems.</div></a>
+    <a class="rj-tool" href="https://rjedtech.github.io/Incoming-Raider-FAQ/"><div class="rj-t">Incoming Raider FAQ <span class="rj-arrow">&rarr;</span></div><div class="rj-d">A searchable guide for new and incoming Regis Jesuit students.</div></a>
+    <a class="rj-tool" href="https://rjedtech.github.io/New-Ignatian-Educator-FAQ/"><div class="rj-t">New Ignatian Educator FAQ <span class="rj-arrow">&rarr;</span></div><div class="rj-d">A searchable onboarding guide for teachers new to Ignatian education.</div></a>
+  </div>
+  <div class="rj-tools-foot">Regis Jesuit &middot; Educational Technology &mdash; free classroom tools that run in your browser</div>
+</section>
+<!--/RJTOOLS-->
+</body>
 </html>
