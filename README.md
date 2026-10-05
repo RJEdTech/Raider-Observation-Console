@@ -67,3 +67,4 @@ The form lives behind your login on the vendor's site. A separate web page can't
 - **Built against:** the Angular/PrimeNG conduct screen at `ieobservation.com/app/observations/<id>/conduct`, Standard 3, September 2026.
 - **Tested on:** a Standard 3 draft — 41 elements and 9 interview blocks indexed, chair eight shown on both the form and the navigator, Type set from the bar, *Show rubric* opened and closed cleanly, and Close restored the form with nothing ticked and nothing saved.
 - The vendor can change the page under this at any time. If the bar appears but nothing collapses, tell Educational Technology.
+- 
