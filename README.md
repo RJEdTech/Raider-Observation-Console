@@ -68,3 +68,7 @@ The form lives behind your login on the vendor's site. A separate web page can't
 - **Tested on:** a Standard 3 draft — 41 elements and 9 interview blocks indexed, chair eight shown on both the form and the navigator, Type set from the bar, *Show rubric* opened and closed cleanly, and Close restored the form with nothing ticked and nothing saved.
 - The vendor can change the page under this at any time. If the bar appears but nothing collapses, tell Educational Technology.
 - 
+
+## License
+
+© 2026 Jason Beyer, RJ Ed Tech. Licensed under [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/): free to share and adapt for non-commercial use with credit. See [LICENSE](LICENSE) for what the license does not cover.
